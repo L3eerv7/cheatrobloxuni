@@ -1,3 +1,8 @@
+-- ====================================================
+-- SCRIPT CORRIGÉ : ESP WALLCHECK, CROSSHAIRS & CAR FLY
+-- Placement : StarterPlayer > StarterPlayerScripts (LocalScript)
+-- ====================================================
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,7 +21,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 Config = {
-	-- Aimbot, Tir & Multi-Target Bullet TP
+	-- Aimbot & Tir
 	AimEnabled        = false,
 	KeyBind           = Enum.UserInputType.MouseButton2,
 	KeyName           = "Clic Droit",
@@ -25,7 +30,6 @@ Config = {
 	TargetPart        = "Tête", -- Options : "Tête", "Corps", "Aléatoire"
 	FOVRing           = false,
 	TriggerEnabled    = false,
-
 	
 	-- ESP
 	ESPEnabled        = false,
@@ -36,16 +40,19 @@ Config = {
 	ShowNametag       = false,
 	MulticolorESP     = false,
 	MaxDist           = 500,
-
+	
 	-- Crosshair
 	CrosshairEnabled  = true,
-	CrosshairType     = "Satanic", -- Satanic, Nazi, Juifs
+	CrosshairType     = "Satanic", -- Options : Satanic, Juifs, Nazi
 	
 	-- Mouvements & Exploits
 	FlyEnabled        = false,
 	FlySpeed          = 50,
 	SpeedHack         = false,
 	SpeedValue        = 24,
+	CarFly            = false,
+	CarFlySpeed       = 80,
+	SkinSwapper       = false,
 	
 	-- Paramètres
 	ToggleKey         = Enum.KeyCode.RightShift,
@@ -91,13 +98,7 @@ local THEMES = {
 
 local COL = THEMES[Config.Theme]
 
--- ---------- couleurs ESP multicolor ----------
--- wall check only: red = visible par moi, violet = derriere mur
-local function colByVis(visible)
-	return visible and Color3.fromRGB(255, 60, 60) or Color3.fromRGB(180, 80, 255)
-end
-
-local ESP_PAL = {
+local ESP_PALette = {
 	Color3.fromRGB(255, 80, 80),
 	Color3.fromRGB(80, 255, 80),
 	Color3.fromRGB(80, 80, 255),
@@ -107,11 +108,12 @@ local ESP_PAL = {
 	Color3.fromRGB(255, 160, 80),
 	Color3.fromRGB(160, 80, 255),
 }
-local function colForIndex(i)
-	return ESP_PAL[(i % #ESP_PAL) + 1]
+
+local function getColForIndex(i)
+	return ESP_PALette[(i % #ESP_PALette) + 1]
 end
 
--- ---------- visibilite (wall check) ----------
+-- Vérification de visibilité (Wall Check)
 local function isVisible(targetPart)
 	if not targetPart then return false end
 	local origin = Camera.CFrame.Position
@@ -138,8 +140,7 @@ local function getTargets()
 					Model = char,
 					Humanoid = hum,
 					RootPart = root,
-					Head = head or root,
-					Player = p,
+					Head = head or root
 				})
 			end
 		end
@@ -192,7 +193,6 @@ UserInputService.InputBegan:Connect(function(input)
 		return
 	end
 
-	-- Raccourci Curseur : Ctrl + Shift + Flèche Gauche
 	if (UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)) 
 		and (UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)) 
 		and input.KeyCode == Enum.KeyCode.Left then
@@ -200,7 +200,6 @@ UserInputService.InputBegan:Connect(function(input)
 		game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Chat, true)
 	end
 
-	-- Skin Swapper (F5)
 	if input.KeyCode == Enum.KeyCode.F5 and Config.SkinSwapper then
 		local targetPlayer = getPlayerUnderCrosshair()
 		if targetPlayer and targetPlayer.Character then
@@ -360,11 +359,8 @@ end
 local y1 = 36
 addCheckboxCustom(col1, "Aimbot Actif", "AimEnabled", y1); y1 = y1 + 27
 addCheckboxCustom(col1, "Cercle FOV", "FOVRing", y1); y1 = y1 + 27
-addCheckboxCustom(col1, "TriggerBot", "TriggerEnabled", y1); y1 = y1 + 27
-addCheckboxCustom(col1, "Rapid Fire (Manuel)", "RapidFire", y1); y1 = y1 + 27
-addCheckboxCustom(col1, "Multi-Target TP", "MultiBulletTP", y1); y1 = y1 + 32
+addCheckboxCustom(col1, "TriggerBot", "TriggerEnabled", y1); y1 = y1 + 32
 
--- Bouton de sélection TargetPart (Tête / Corps / Aléatoire)
 local targetBtn = Instance.new("TextButton")
 targetBtn.Size = UDim2.new(1, -16, 0, 24)
 targetBtn.Position = UDim2.fromOffset(8, y1)
@@ -404,10 +400,9 @@ bindBtn.MouseButton1Click:Connect(function() bindingKey = true; bindBtn.Text = "
 y1 = y1 + 32
 
 addSliderCustom(col1, "Smooth Aimbot", "Smooth", 1, 10, 1, y1); y1 = y1 + 35
-addSliderCustom(col1, "Taille FOV", "FOVdeg", 10, 180, 5, y1)
-y1 = y1 + 35
-addCheckboxCustom(col1, "Crosshair Actif", "CrosshairEnabled", y1); y1 = y1 + 27
+addSliderCustom(col1, "Taille FOV", "FOVdeg", 10, 180, 5, y1); y1 = y1 + 35
 
+addCheckboxCustom(col1, "Crosshair Actif", "CrosshairEnabled", y1); y1 = y1 + 27
 local crossBtn = Instance.new("TextButton")
 crossBtn.Size = UDim2.new(1, -16, 0, 24)
 crossBtn.Position = UDim2.fromOffset(8, y1)
@@ -420,12 +415,11 @@ crossBtn.BackgroundColor3 = COL.border
 crossBtn.BorderSizePixel = 0
 crossBtn.Parent = col1
 crossBtn.MouseButton1Click:Connect(function()
-	if Config.CrosshairType == "Satanic" then Config.CrosshairType = "Nazi"
-	elseif Config.CrosshairType == "Nazi" then Config.CrosshairType = "Juifs"
+	if Config.CrosshairType == "Satanic" then Config.CrosshairType = "Juifs"
+	elseif Config.CrosshairType == "Juifs" then Config.CrosshairType = "Nazi"
 	else Config.CrosshairType = "Satanic" end
 	crossBtn.Text = "Crosshair : " .. Config.CrosshairType
 end)
-y1 = y1 + 32
 
 -- Colonne 2 : ESP
 local y2 = 36
@@ -435,7 +429,7 @@ addCheckboxCustom(col2, "Corner Box", "ShowCorner", y2); y2 = y2 + 27
 addCheckboxCustom(col2, "Skeleton", "ShowSkeleton", y2); y2 = y2 + 27
 addCheckboxCustom(col2, "Tracer", "ShowTracer", y2); y2 = y2 + 27
 addCheckboxCustom(col2, "Nametag & Distance", "ShowNametag", y2); y2 = y2 + 27
-addCheckboxCustom(col2, "ESP Multicolor", "MulticolorESP", y2); y2 = y2 + 32
+addCheckboxCustom(col2, "ESP Multicolore", "MulticolorESP", y2); y2 = y2 + 32
 addSliderCustom(col2, "Distance Max", "MaxDist", 50, 2000, 50, y2)
 
 -- Colonne 3 : Mouvements
@@ -506,7 +500,7 @@ UserInputService.InputEnded:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton1 then draggingPanel = false end
 end)
 
--- Boucle principale
+-- Dessins ESP & Elements Visuels
 local Drawings = {}
 local function drawingSet(m)
 	if Drawings[m] then return Drawings[m] end
@@ -523,12 +517,13 @@ local function drawingSet(m)
 	text.Center = true
 	text.Color = Color3.new(1, 1, 1)
 	text.Visible = false
-	-- boite noire transparente
+
 	local fill = Drawing.new("Square")
 	fill.Filled = true
 	fill.Color = Color3.fromRGB(0, 0, 0)
-	fill.Transparency = 0.45
+	fill.Transparency = 0.4
 	fill.Visible = false
+
 	Drawings[m] = { lines = lines, text = text, fill = fill }
 	m.AncestryChanged:Connect(function()
 		if not m.Parent and Drawings[m] then
@@ -547,118 +542,88 @@ ring.Thickness = 1.5
 ring.NumSides = 60
 ring.Visible = false
 
--- crosshair etoile du diable tournante
-local starLines = {}
-for i = 1, 10 do
+-- Système complet Crosshair Tournant
+local crosshairLines = {}
+for i = 1, 24 do
 	local l = Drawing.new("Line")
 	l.Thickness = 2
 	l.Color = Color3.fromRGB(255, 60, 60)
 	l.Visible = false
-	starLines[i] = l
+	table.insert(crosshairLines, l)
 end
-local swastikaLines = {}
-for i = 1, 12 do
-	local l = Drawing.new("Line")
-	l.Thickness = 2
-	l.Color = Color3.fromRGB(255, 60, 60)
-	l.Visible = false
-	swastikaLines[i] = l
-end
-local davidLines = {}
-for i = 1, 6 do
-	local l = Drawing.new("Line")
-	l.Thickness = 2
-	l.Color = Color3.fromRGB(255, 60, 60)
-	l.Visible = false
-	davidLines[i] = l
-end
-local starAngle = 0
+local crosshairAngle = 0
 
-local function hideAllCrosshair()
-	for _, l in ipairs(starLines) do l.Visible = false end
-	for _, l in ipairs(swastikaLines) do l.Visible = false end
-	for _, l in ipairs(davidLines) do l.Visible = false end
-end
-
-local function drawDevilStar(cx, cy, r, angle)
-	local pts = 5
-	local step = math.pi * 2 / pts
-	local inner = r * 0.38
-	local idx = 1
-	for i = 0, pts-1 do
-		local a0 = angle + i * step
-		local a1 = angle + (i + 2) * step
-		local x0 = cx + math.cos(a0) * r
-		local y0 = cy + math.sin(a0) * r
-		local x1 = cx + math.cos(a1) * r
-		local y1 = cy + math.sin(a1) * r
-		local l = starLines[idx]; idx = idx + 1
-		l.From = Vector2.new(x0, y0)
-		l.To = Vector2.new(x1, y1)
-		l.Color = Color3.fromRGB(255, 60, 60)
-		l.Thickness = 2
-		l.Visible = true
-	end
-	for i = 0, pts-1 do
-		local a0 = angle + i * step + step/2
-		local a1 = angle + (i + 1) * step + step/2
-		local x0 = cx + math.cos(a0) * inner
-		local y0 = cy + math.sin(a0) * inner
-		local x1 = cx + math.cos(a1) * inner
-		local y1 = cy + math.sin(a1) * inner
-		local l = starLines[idx]; idx = idx + 1
-		l.From = Vector2.new(x0, y0)
-		l.To = Vector2.new(x1, y1)
-		l.Color = Color3.fromRGB(255, 60, 60)
-		l.Thickness = 1.5
-		l.Visible = true
+local function hideCrosshairLines()
+	for _, l in ipairs(crosshairLines) do
+		l.Visible = false
 	end
 end
 
-local function drawSwastika(cx, cy, r, angle)
-	hideAllCrosshair()
-	local armLen = r
-	local dirs = {0, math.pi/2, math.pi, 3*math.pi/2}
+local function drawRotatingCrosshair(cx, cy, r, angle, typeStr)
+	hideCrosshairLines()
 	local idx = 1
-	for _, d in ipairs(dirs) do
-		local a = angle + d
-		local x1 = cx + math.cos(a) * (armLen * 0.3)
-		local y1 = cy + math.sin(a) * (armLen * 0.3)
-		local x2 = cx + math.cos(a) * armLen
-		local y2 = cy + math.sin(a) * armLen
-		local perp = a + math.pi/2
-		local hx = x2 + math.cos(perp) * (armLen * 0.35)
-		local hy = y2 + math.sin(perp) * (armLen * 0.35)
-		local l = swastikaLines[idx]; idx = idx + 1
-		l.From = Vector2.new(x1, y1); l.To = Vector2.new(x2, y2)
-		l.Color = Color3.fromRGB(255, 60, 60); l.Thickness = 3; l.Visible = true
-		local l2 = swastikaLines[idx]; idx = idx + 1
-		l2.From = Vector2.new(x2, y2); l2.To = Vector2.new(hx, hy)
-		l2.Color = Color3.fromRGB(255, 60, 60); l2.Thickness = 3; l2.Visible = true
-	end
-	local c1 = swastikaLines[idx]; idx = idx + 1
-	c1.From = Vector2.new(cx - r*0.15, cy); c1.To = Vector2.new(cx + r*0.15, cy)
-	c1.Color = Color3.fromRGB(255,60,60); c1.Thickness = 2; c1.Visible = true
-	local c2 = swastikaLines[idx]; idx = idx + 1
-	c2.From = Vector2.new(cx, cy - r*0.15); c2.To = Vector2.new(cx, cy + r*0.15)
-	c2.Color = Color3.fromRGB(255,60,60); c2.Thickness = 2; c2.Visible = true
-end
-
-local function drawStarOfDavid(cx, cy, r, angle)
-	hideAllCrosshair()
-	local idx = 1
-	for t = 0, 1 do
-		local rot = angle + (t == 1 and math.pi or 0)
-		for i = 0, 2 do
-			local a0 = rot + i * (math.pi * 2 / 3) - math.pi/2
-			local a1 = rot + ((i+1) % 3) * (math.pi * 2 / 3) - math.pi/2
+	if typeStr == "Satanic" then
+		-- Étoile à 5 branches
+		local pts = 5
+		local step = math.pi * 2 / pts
+		for i = 0, pts - 1 do
+			local a0 = angle + i * step
+			local a1 = angle + (i + 2) * step
 			local x0 = cx + math.cos(a0) * r
 			local y0 = cy + math.sin(a0) * r
 			local x1 = cx + math.cos(a1) * r
 			local y1 = cy + math.sin(a1) * r
-			local l = davidLines[idx]; idx = idx + 1
-			l.From = Vector2.new(x0, y0); l.To = Vector2.new(x1, y1)
-			l.Color = Color3.fromRGB(255, 60, 60); l.Thickness = 2; l.Visible = true
+			if crosshairLines[idx] then
+				crosshairLines[idx].Visible = true
+				crosshairLines[idx].From = Vector2.new(x0, y0)
+				crosshairLines[idx].To = Vector2.new(x1, y1)
+				idx = idx + 1
+			end
+		end
+	elseif typeStr == "Juifs" then
+		-- Étoile de David (2 triangles inversés)
+		for t = 0, 1 do
+			local rot = angle + (t == 1 and math.pi or 0)
+			for i = 0, 2 do
+				local a0 = rot + i * (math.pi * 2 / 3) - math.pi / 2
+				local a1 = rot + ((i + 1) % 3) * (math.pi * 2 / 3) - math.pi / 2
+				local x0 = cx + math.cos(a0) * r
+				local y0 = cy + math.sin(a0) * r
+				local x1 = cx + math.cos(a1) * r
+				local y1 = cy + math.sin(a1) * r
+				if crosshairLines[idx] then
+					crosshairLines[idx].Visible = true
+					crosshairLines[idx].From = Vector2.new(x0, y0)
+					crosshairLines[idx].To = Vector2.new(x1, y1)
+					idx = idx + 1
+				end
+			end
+		end
+	elseif typeStr == "Nazi" then
+		-- Swastika
+		local arm = r
+		for i = 0, 3 do
+			local a = angle + (i * math.pi / 2)
+			local x1 = cx + math.cos(a) * (arm * 0.3)
+			local y1 = cy + math.sin(a) * (arm * 0.3)
+			local x2 = cx + math.cos(a) * arm
+			local y2 = cy + math.sin(a) * arm
+			local perp = a + math.pi / 2
+			local hx = x2 + math.cos(perp) * (arm * 0.35)
+			local hy = y2 + math.sin(perp) * (arm * 0.35)
+
+			if crosshairLines[idx] then
+				crosshairLines[idx].Visible = true
+				crosshairLines[idx].From = Vector2.new(x1, y1)
+				crosshairLines[idx].To = Vector2.new(x2, y2)
+				idx = idx + 1
+			end
+			if crosshairLines[idx] then
+				crosshairLines[idx].Visible = true
+				crosshairLines[idx].From = Vector2.new(x2, y2)
+				crosshairLines[idx].To = Vector2.new(hx, hy)
+				idx = idx + 1
+			end
 		end
 	end
 end
@@ -687,6 +652,7 @@ RunService.RenderStepped:Connect(function()
 		humChar.WalkSpeed = Config.SpeedValue
 	end
 
+	-- Vol Joueur
 	if Config.FlyEnabled and rootPart then
 		if not flyBv then
 			flyBv = Instance.new("BodyVelocity")
@@ -712,27 +678,28 @@ RunService.RenderStepped:Connect(function()
 		if flyBg then flyBg:Destroy(); flyBg = nil end
 	end
 
-	local currentVehicleRoot = nil
+	-- Vol Véhicule Amélioré
+	local vehicleRoot = nil
 	if humChar and humChar.SeatPart then
 		local seat = humChar.SeatPart
-		local vehicleModel = seat.Parent
-		if vehicleModel and vehicleModel:IsA("Model") then
-			currentVehicleRoot = vehicleModel.PrimaryPart or vehicleModel:FindFirstChild("HumanoidRootPart") or seat
+		local model = seat:FindFirstAncestorOfClass("Model")
+		if model then
+			vehicleRoot = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart") or seat
 		end
 	end
 
-	if Config.CarFly and currentVehicleRoot then
+	if Config.CarFly and vehicleRoot then
 		if not carBv then
 			carBv = Instance.new("BodyVelocity")
 			carBv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 			carBv.Velocity = Vector3.zero
-			carBv.Parent = currentVehicleRoot
+			carBv.Parent = vehicleRoot
 		end
 		if not carBg then
 			carBg = Instance.new("BodyGyro")
 			carBg.MaxTorque = Vector3.new(3e4, 3e4, 3e4)
 			carBg.P = 3000
-			carBg.Parent = currentVehicleRoot
+			carBg.Parent = vehicleRoot
 		end
 		carBg.CFrame = Camera.CFrame
 		local carMoveDir = Vector3.zero
@@ -746,10 +713,10 @@ RunService.RenderStepped:Connect(function()
 		if carBg then carBg:Destroy(); carBg = nil end
 	end
 
+	-- Logique Aimbot
 	local bestTarget = nil
 	local shortestDist = math.huge
 	local mousePos = UserInputService:GetMouseLocation()
-	local allVisibleTargets = {}
 
 	for _, t in ipairs(getTargets()) do
 		local partToAim = t.RootPart
@@ -764,12 +731,9 @@ RunService.RenderStepped:Connect(function()
 			if onScreen then
 				local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
 				local maxR = Camera.ViewportSize.Y / 2 * (Config.FOVdeg / 140)
-				if dist <= maxR then
-					table.insert(allVisibleTargets, partToAim)
-					if dist < shortestDist then
-						shortestDist = dist
-						bestTarget = partToAim
-					end
+				if dist <= maxR and dist < shortestDist then
+					shortestDist = dist
+					bestTarget = partToAim
 				end
 			end
 		end
@@ -786,23 +750,6 @@ RunService.RenderStepped:Connect(function()
 		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
 	end
 
-	local isShooting = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-	if aimbotActive and isShooting then
-		if Config.MultiBulletTP and #allVisibleTargets > 0 then
-			task.spawn(function()
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-				task.wait(0.005)
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-			end)
-		elseif Config.RapidFire and bestTarget then
-			task.spawn(function()
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-				task.wait(0.01)
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-			end)
-		end
-	end
-
 	if ring then
 		if Config.FOVRing then
 			ring.Visible = true
@@ -813,23 +760,18 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 
+	-- Affichage du Crosshair Tournant
 	if Config.CrosshairEnabled then
-		starAngle = starAngle + 0.05
-		hideAllCrosshair()
-		if Config.CrosshairType == "Satanic" then
-			drawDevilStar(center.X, center.Y, 16, starAngle)
-		elseif Config.CrosshairType == "Nazi" then
-			drawSwastika(center.X, center.Y, 16, starAngle)
-		elseif Config.CrosshairType == "Juifs" then
-			drawStarOfDavid(center.X, center.Y, 16, starAngle)
-		end
+		crosshairAngle = crosshairAngle + 0.04
+		drawRotatingCrosshair(center.X, center.Y, 16, crosshairAngle, Config.CrosshairType)
 	else
-		hideAllCrosshair()
+		hideCrosshairLines()
 	end
 
+	-- Gestion de l'ESP
 	local activeModels = {}
 	if Config.ESPEnabled then
-		for i, t in ipairs(getTargets()) do activeModels[t.Model] = i end
+		for idx, t in ipairs(getTargets()) do activeModels[t.Model] = idx end
 	end
 
 	for model, set in pairs(Drawings) do
@@ -852,7 +794,7 @@ RunService.RenderStepped:Connect(function()
 			local root = t.RootPart
 			local head = t.Head
 			local set = drawingSet(t.Model)
-			local pIdx = activeModels[t.Model] or 0
+			local pIdx = activeModels[t.Model] or 1
 
 			hideDrawings(set)
 
@@ -871,10 +813,12 @@ RunService.RenderStepped:Connect(function()
 						local lft = botPos.X - w / 2
 						local rgt = botPos.X + w / 2
 
-						local vis = isVisible(head)
-						local boxCol = colByVis(vis)
-						local multiCol = Config.MulticolorESP and colForIndex(pIdx) or boxCol
+						-- Wall check : Vert = Visible, Rouge = Caché
+						local targetVisible = isVisible(head)
+						local statusColor = targetVisible and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 60, 60)
+						local currentESPColor = Config.MulticolorESP and getColForIndex(pIdx) or statusColor
 
+						-- Arrière-plan noir transparent
 						set.fill.Size = Vector2.new(w, h)
 						set.fill.Position = Vector2.new(lft, topPos.Y)
 						set.fill.Visible = true
@@ -883,7 +827,7 @@ RunService.RenderStepped:Connect(function()
 						local function addLine(from, to, color)
 							if set.lines[idx] then
 								set.lines[idx].Visible = true
-								set.lines[idx].Color = color or boxCol
+								set.lines[idx].Color = color or currentESPColor
 								set.lines[idx].From = from
 								set.lines[idx].To = to
 								idx = idx + 1
@@ -891,22 +835,22 @@ RunService.RenderStepped:Connect(function()
 						end
 
 						if Config.ShowBox then
-							addLine(Vector2.new(lft, topPos.Y), Vector2.new(rgt, topPos.Y), boxCol)
-							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt, botPos.Y), boxCol)
-							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(lft, botPos.Y), boxCol)
-							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft, topPos.Y), boxCol)
+							addLine(Vector2.new(lft, topPos.Y), Vector2.new(rgt, topPos.Y))
+							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt, botPos.Y))
+							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(lft, botPos.Y))
+							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft, topPos.Y))
 						end
 
 						if Config.ShowCorner then
 							local cw, ch = w * 0.25, h * 0.25
-							addLine(Vector2.new(lft, topPos.Y), Vector2.new(lft + cw, topPos.Y), boxCol)
-							addLine(Vector2.new(lft, topPos.Y), Vector2.new(lft, topPos.Y + ch), boxCol)
-							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt - cw, topPos.Y), boxCol)
-							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt, topPos.Y + ch), boxCol)
-							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft + cw, botPos.Y), boxCol)
-							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft, botPos.Y - ch), boxCol)
-							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(rgt - cw, botPos.Y), boxCol)
-							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(rgt, botPos.Y - ch), boxCol)
+							addLine(Vector2.new(lft, topPos.Y), Vector2.new(lft + cw, topPos.Y))
+							addLine(Vector2.new(lft, topPos.Y), Vector2.new(lft, topPos.Y + ch))
+							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt - cw, topPos.Y))
+							addLine(Vector2.new(rgt, topPos.Y), Vector2.new(rgt, topPos.Y + ch))
+							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft + cw, botPos.Y))
+							addLine(Vector2.new(lft, botPos.Y), Vector2.new(lft, botPos.Y - ch))
+							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(rgt - cw, botPos.Y))
+							addLine(Vector2.new(rgt, botPos.Y), Vector2.new(rgt, botPos.Y - ch))
 						end
 
 						if Config.ShowSkeleton then
@@ -917,21 +861,21 @@ RunService.RenderStepped:Connect(function()
 									local v1, o1 = Camera:WorldToViewportPoint(p1.Position)
 									local v2, o2 = Camera:WorldToViewportPoint(p2.Position)
 									if o1 and o2 then
-										addLine(Vector2.new(v1.X, v1.Y), Vector2.new(v2.X, v2.Y), multiCol)
+										addLine(Vector2.new(v1.X, v1.Y), Vector2.new(v2.X, v2.Y))
 									end
 								end
 							end
 						end
 
 						if Config.ShowTracer then
-							addLine(Vector2.new(center.X, Camera.ViewportSize.Y), botPos, multiCol)
+							addLine(Vector2.new(center.X, Camera.ViewportSize.Y), botPos)
 						end
 
 						if Config.ShowNametag then
 							set.text.Visible = true
 							set.text.Text = t.Model.Name .. " [" .. math.floor(distToPlayer) .. "m]"
 							set.text.Position = Vector2.new(botPos.X, topPos.Y - 18)
-							set.text.Color = multiCol
+							set.text.Color = currentESPColor
 						end
 					end
 				end
